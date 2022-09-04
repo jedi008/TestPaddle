@@ -3,8 +3,7 @@ from itertools import count
 import paddle
 import paddle.nn as nn
 import paddle.optimizer as optim
-import paddle.nn.functional as F
-from paddle.distribution import Categorical
+from model import *
 
 print(paddle.__version__)
 
@@ -13,42 +12,11 @@ env = gym.make("CartPole-v0")  ### 或者 env = gym.make("CartPole-v0").unwrappe
 
 state_size = env.observation_space.shape[0]
 action_size = env.action_space.n
-print("state_size: ",state_size)
-print("action_size: ",state_size)
+print("state_size: ", state_size)
+print("action_size: ", state_size)
+print("env.action_space: ", env.action_space)
 
-lr = 0.001
-
-class Actor(nn.Layer):
-    def __init__(self, state_size, action_size):
-        super(Actor, self).__init__()
-        self.state_size = state_size
-        self.action_size = action_size
-        self.linear1 = nn.Linear(self.state_size, 128)
-        self.linear2 = nn.Linear(128, 256)
-        self.linear3 = nn.Linear(256, self.action_size)
-
-    def forward(self, state):
-        output = F.relu(self.linear1(state))
-        output = F.relu(self.linear2(output))
-        output = self.linear3(output)
-        distribution = Categorical(F.softmax(output, axis=-1))
-        return distribution
-
-
-class Critic(nn.Layer):
-    def __init__(self, state_size, action_size):
-        super(Critic, self).__init__()
-        self.state_size = state_size
-        self.action_size = action_size
-        self.linear1 = nn.Linear(self.state_size, 128)
-        self.linear2 = nn.Linear(128, 256)
-        self.linear3 = nn.Linear(256, 1)
-
-    def forward(self, state):
-        output = F.relu(self.linear1(state))
-        output = F.relu(self.linear2(output))
-        value = self.linear3(output)
-        return value
+lr = 0.0001
 
 
 def compute_returns(next_value, rewards, masks, gamma=0.99):
@@ -78,6 +46,7 @@ def trainIters(actor, critic, n_iters):
             dist, value = actor(state), critic(state)
 
             action = dist.sample([1])
+
             next_state, reward, done, _ = env.step(action.cpu().squeeze(0).numpy()) 
 
             log_prob = dist.log_prob(action)
@@ -136,4 +105,4 @@ if __name__ == '__main__':
         print('Critic Model loaded')
     else:
         critic = Critic(state_size, action_size)
-    trainIters(actor, critic, n_iters=201)
+    trainIters(actor, critic, n_iters=2001)
