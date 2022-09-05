@@ -11,9 +11,10 @@ state_size = env.observation_space.shape[0]
 action_size = env.action_space.n
 
 if __name__ == '__main__':
-    if os.path.exists('model/actor2000.pdparams'):
+    actor_weights = 'model/actor.pdparams'
+    if os.path.exists(actor_weights):
         actor = Actor(state_size, action_size)
-        model_state_dict  = paddle.load('model/actor2000.pdparams')
+        model_state_dict  = paddle.load(actor_weights)
         actor.set_state_dict(model_state_dict )
         print('Actor Model loaded')
     else:
