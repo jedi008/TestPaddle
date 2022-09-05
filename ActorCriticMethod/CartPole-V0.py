@@ -16,7 +16,7 @@ print("state_size: ", state_size)
 print("action_size: ", state_size)
 print("env.action_space: ", env.action_space)
 
-lr = 0.0001
+lr = 0.001
 
 
 def compute_returns(next_value, rewards, masks, gamma=0.99):
@@ -33,7 +33,7 @@ def trainIters(actor, critic, n_iters):
     optimizerC = optim.Adam(lr, parameters=critic.parameters())
     for iter in range(n_iters):
         state = env.reset()
-        log_probs = []
+        probs = []
         values = []
         rewards = []
         masks = []
@@ -47,12 +47,12 @@ def trainIters(actor, critic, n_iters):
 
             action = dist.sample([1])
 
-            next_state, reward, done, _ = env.step(action.cpu().squeeze(0).numpy()) 
+            next_state, reward, done, _ = env.step(action.cpu().squeeze(0).numpy())  # reward是这一步的立即奖励
 
-            log_prob = dist.log_prob(action)
+            prob = dist.prob(action)
             # entropy += dist.entropy().mean()
 
-            log_probs.append(log_prob)
+            probs.append(prob)
             values.append(value)
             rewards.append(paddle.to_tensor([reward], dtype="float32", place=device))
             masks.append(paddle.to_tensor([1-done], dtype="float32", place=device))
@@ -69,13 +69,13 @@ def trainIters(actor, critic, n_iters):
         next_value = critic(next_state)
         returns = compute_returns(next_value, rewards, masks)
 
-        log_probs = paddle.concat(log_probs)
+        probs = paddle.concat(probs)
         returns = paddle.concat(returns).detach()
         values = paddle.concat(values)
 
-        advantage = returns - values
+        advantage = returns - values #每一步的 综合奖励 - env返回的立即奖励
 
-        actor_loss = -(log_probs * advantage.detach()).mean()
+        actor_loss = -(paddle.log(probs) * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
 
         optimizerA.clear_grad()
@@ -105,4 +105,4 @@ if __name__ == '__main__':
         print('Critic Model loaded')
     else:
         critic = Critic(state_size, action_size)
-    trainIters(actor, critic, n_iters=2001)
+    trainIters(actor, critic, n_iters=201)
