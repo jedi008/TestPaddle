@@ -136,3 +136,4 @@ dmypy.json
 /OCR/output
 /OCR/data
 *.para
+*.pdparams
