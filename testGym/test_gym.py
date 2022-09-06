@@ -13,7 +13,7 @@
 
 
 import gym
-env = gym.make('CartPole-v1')
+env = gym.make('Pendulum-v1') #CartPole-v1
 print("\naction_space: ",env.action_space)
 print("\n\nobservation_space: ", env.observation_space)
 
