@@ -45,7 +45,7 @@ def trainIters(actor, critic, n_iters):
             state = paddle.to_tensor(state,dtype="float32",place=device)
             dist, value = actor(state), critic(state)
 
-            action = dist.sample([1])
+            action = dist.sample([1])  #按照其中每个元素的值作为抽样概率进行抽样
 
             next_state, reward, done, _ = env.step(action.cpu().squeeze(0).numpy())  # reward是这一步的立即奖励
 
@@ -73,9 +73,9 @@ def trainIters(actor, critic, n_iters):
         returns = paddle.concat(returns).detach()
         values = paddle.concat(values)
 
-        advantage = returns - values #每一步的 综合奖励 - env返回的立即奖励
+        advantage = returns - values #每一步的 综合奖励 - env返回的立即奖励   ！！！注意这个值有正有负
 
-        actor_loss = -(paddle.log(probs) * advantage.detach()).mean()
+        actor_loss = -(paddle.log(probs) * advantage.detach()).mean()  # 实测不要log也行，actor_loss = -(probs * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
 
         optimizerA.clear_grad()
@@ -84,8 +84,8 @@ def trainIters(actor, critic, n_iters):
         critic_loss.backward()
         optimizerA.step()
         optimizerC.step()
-    paddle.save(actor.state_dict(), 'model/actor.pdparams')
-    paddle.save(critic.state_dict(), 'model/critic.pdparams')
+    paddle.save(actor.state_dict(), './model/actor.pdparams')
+    paddle.save(critic.state_dict(), './model/critic.pdparams')
     env.close()
 
 
